@@ -7,6 +7,21 @@ A Multitenant API Boilerplate built on Symfony4
 * Uses JWT for authentication
 * Protected and unprotected routes
 
+### Usage
+
+Unprotected Routes
+
+`https://[tenant1].domain.com/validate`
+`https://[tenant2].domain.com/validate`
+
+Protected Routes are under the /api route
+
+`https://[tenant1].domain.com/api/users`
+`https://[tenant2].domain.com/api/users`
+
+ Request Header should contain the Auth token from received /login
+ 
+ `Authorization : Bearer [token]`
 
 Multitenant Code is under
 
