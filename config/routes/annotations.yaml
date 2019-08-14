@@ -1,0 +1,9 @@
+multi:
+    resource: "Multi/Controller/"
+    type:     annotation
+
+api:
+    resource: "Api/Controller/"
+    type:     annotation
+
+

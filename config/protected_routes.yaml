@@ -1,0 +1,10 @@
+user_get_users_all:
+  path: /users_all
+  methods: [GET]
+  controller: App\Api\Controller\UserController::getUsers
+
+
+
+
+
+

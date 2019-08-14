@@ -1,0 +1,40 @@
+#fos_user:
+#  resource: "@FOSUserBundle/Resources/config/routing/all.xml"
+
+#api_auth_login:
+#    path: /api/auth/login
+#    methods:  [POST]
+
+#api:
+#    prefix: /api
+#    resource: '../src/Controller/Api'
+
+api:
+  prefix: /api
+  resource: './protected_routes.yaml'
+
+
+user_get_users:
+  path: /users
+  methods: [GET]
+  controller: App\Api\Controller\AuthController::getUsers
+
+user_login:
+  path: /login
+  methods: [POST]
+  controller: App\Api\Controller\AuthController:login
+
+user_logout:
+  path: /logout
+  methods: [POST]
+  controller: App\Api\Controller\AuthController:logout
+
+user_register:
+  path: /register
+  methods: [POST]
+  controller: App\Api\Controller\AuthController:register
+
+user_forgot:
+  path: /forgotPassword
+  methods: [POST]
+  controller: App\Api\Controller\AuthController:forgotPassword

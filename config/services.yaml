@@ -1,0 +1,99 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    locale: 'en'
+    allowed_commands:
+        - doctrine:database:create
+        - doctrine:database:drop
+        - doctrine:schema:update
+        - doctrine:schema:create
+        - doctrine:schema:drop
+        - doctrine:fixtures:load
+        - doctrine:migrations:diff
+        - doctrine:migrations:execute
+        - doctrine:migrations:generate
+        - doctrine:migrations:migrate
+        - doctrine:migrations:version
+        - doctrine:migrations:status
+        - doctrine:mapping:info
+
+    fixtures:
+        default: "%kernel.root_dir%/../src/Multi/DataFixtures/Standard"
+        tenant: "%kernel.root_dir%/../src/Multi/DataFixtures/Tenant"
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/*'
+        exclude: '../src/{Command,DependencyInjection,Entity,Migrations,Tests,Kernel.php,Server.php}'
+
+    app_bundle.collector.db_connections:
+        class: App\Multi\Collector\MultiDbCollector
+        arguments:
+            - "@doctrine.dbal.default_connection"
+            - "@doctrine.dbal.tenant_connection"
+        tags:
+            - { name: data_collector, template: "Toolbar/DatabaseConnections.html.twig", id: "database_connections" }
+
+    app_bundle.command_listener:
+        class: App\Multi\Listener\CommandListener
+        arguments:
+            - "@app_bundle.repository.tenant"
+            - "@doctrine.dbal.tenant_connection"
+            - "@=service('doctrine.dbal.default_connection').getSchemaManager()"
+            - "%allowed_commands%"
+        tags:
+            - { name: kernel.event_listener, event: console.command, method: onConsoleCommand, priority: 255 }
+
+    app_bundle.fixtures_listener:
+        class: App\Multi\Listener\FixturesListener
+        arguments:
+            - "%fixtures%"
+        tags:
+            - { name: kernel.event_listener, event: console.command, method: onConsoleCommand, priority: 254 }
+
+    app_bundle.dbma_listener:
+        class: App\Multi\Listener\DatabaseListener
+        tags:
+            - { name: kernel.event_listener, event: console.command, method: onConsoleCommand, priority: 254 }
+
+
+    app_bundle.request_listener:
+        class: App\Multi\Listener\TenantListener
+        arguments:
+            - "@doctrine.dbal.tenant_connection"
+            - "@app_bundle.repository.tenant"
+        tags:
+            - {name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 257 }
+
+    app_bundle.repository.tenant:
+        class: App\Multi\Entity\TenantRepository
+        public: true
+        factory: 'doctrine.orm.default_entity_manager:getRepository'
+        arguments:
+            - App\Multi\Entity\Tenant
+
+    app_bundle.debug_listener:
+        class: App\Api\Model\DebuggerListener
+        tags:
+            - {name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 258 }
+            - {name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+
+
+    app.admin.tenant_view:
+        class: App\Admin\Admin\TenantAdmin
+        arguments:
+            - ~
+            - App\Multi\Entity\Tenant
+            - App\Admin\Controller\TenantController
+        tags:
+            - { name: sonata.admin, manager_type: orm, group: Clients, label: Clients }
